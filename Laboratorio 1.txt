@@ -1,0 +1,40 @@
+Laboratorio 1 Sistemas Operativos 3
+"Comandos usados practica 1
+
+============================================
+
+Comandos usados practica 2
+
+============================================
+nmcli device status (mostrar interfaces y sus conexiones)
+nmcli con mod ''red'' ipv4.method auto (dhcp)
+nmcli con up ''red'' (encender interfaz)
+nmtui (networkmanager interfaz)
+nmcli con mod "red" ipv4.addresses 192.168.1.100/24 (Asignar ipv4)
+nmcli con mod "red" ipv4.gateway 192.168.1.1 (mascara ipv4)
+nmcli con mod "red" ipv4.dns "8.8.8.8 8.8.4.4" (dns)
+nmcli con mod "red" ipv4.method manual (ipv4 estatica)
+nmcli con up "red'' 
+clear (limpiar)
+Comandos usados practica 3
+
+============================================
+sudo useradd (usuario)
+sudo passwd (contraseña)
+sudo usermod -aG wheel (usuario)
+sudo groupadd (nombre)
+sudo usermod -G (grupo) (usuario)
+sudo userdel -r (usuario)
+sudo groupdel (grupo) 
+groups
+Comandos usados practica 4
+
+============================================
+mkdir (carpeta)
+cd (carpeta)
+vi archivo.txt (i para modificar, para salir es: esc, :wq, enter) 
+chmod 700 archivo.txt (solo usuario owner permisos(070 en caso del grupo))
+ls -l (verificar) 
+rm -r (eliminar)
+cp directorio/archivo objetivo/
+
