@@ -1,0 +1,51 @@
+Comandos usados practica 1
+============================================
+sudo dnf update - Actualizar Sistema
+
+sudo dnf upgrade - Actualizar Dependencias el Sistema 
+
+sudo dnf repolist all - Revisar la lista de repositorios
+
+sudo dnf search bashtop - Buscar bashtop en mi sistema
+
+sudo dnf install epel-release -y - Instalar epel
+
+sudo dnf install btop - Instalar bashtop 
+
+btop - Iniciar Bashtop 
+
+sudo dnf remove bashtop - Eliminar bashtop 
+
+rm -rf /.config/bashtop Eliminarlo completamente 
+
+
+Comandos usados practica 2
+
+============================================
+sudo crontab -e 
+* * * * * /bin/dnf 
+
+sudo crontab -l
+
+rm -rf /tmp/ | at now + 1 minute
+
+Comandos usados practica 3
+
+============================================
+
+lsblk - Confirmar disco
+
+sudo fdisk /dev/
+
+sudo mkfs.ext /dev/  -Crear disco tipo ext4
+
+mkdir - Crear carpeta
+
+mount /dev/dirección ~/Desktop/archivo
+
+cd /ubicacion
+
+
+nano hola.txt - Crear archivo de texto 
+
+umount ~/Desktop/disco
