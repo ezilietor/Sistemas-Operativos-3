@@ -1,0 +1,91 @@
+Comandos usados practica 1
+============================================
+Contraseña perdida:
+
+Usar Esc al inicio del grub para editarlo
+
+rd.break | al final de la linea de Linux y Ctrl X para ejecutar
+
+mount -o remount,rw /sysroot | Montar el Sistema en modo lectura y escritura
+
+chroot /sysroot  | Entrar a la configuracion del modo root
+
+passwd root | Modificar  contraseña
+
+touch /.autorelabel | Guardar configuración de comandos de emergencia. IMPORTANTE HACERLO
+
+exit | Para salir
+
+reboot | Para reiniciar
+
+Espera en el menu 20 segundos:
+
+Sudo nano /etc/default/grub | Entrar al apartado del grub y modificarlo
+
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg | Guardar la configuración realizada
+
+reboot | Reiniciar
+
+Comandos usados practica 2
+============================================
+Backup
+nano backup.sh | Crear el archivo script
+---ejecutar lo siguiente dentro del archivo---
+
+#!/bin/bash
+
+NOMBRE_ARCHIVO="backup-$(date +'%d-%m-%Y:%H:%M').tar.gz" | Aquí establece que se haga el backup con los datos solicitados.
+
+tar -czvf $NOMBRE_ARCHIVO /home/tu_usuario | Aquí para extraer el archivo y mandarlo a directorio correspondiente.
+
+chmod +x backup.sh | Aqui le doy permiso de Ejecucion 
+
+./backup.sh  | Ejecuto el Script 
+
+IfConfig
+
+nano Red.sh | Creo el archivo del script 
+
+------Dentro del archivo------------
+
+#!/bin/bash
+
+echo "¿Qué nombre desea darle al archivo?"
+read nombre
+ifconfig > "/home/user/Escritorio/$nombre.txt
+------------------------------------
+
+chmod +x Red.sh | Permisos de Ejecución 
+
+./Red.sh | Ejecuto el archivo
+
+
+Comandos usados practica 3
+
+============================================
+
+
+sudo systemctl enable sshd
+
+sudo systemctl start sshd
+
+ssh usuario@ip
+
+----en mi powershell---
+
+ssh-keygen
+
+---Establecer la ubicación ----
+
+C:\Users\ezequ\.ssh\id_rsa.pub
+
+type $env:USERPROFILE\.ssh\id_rsa.pub | Copiar mi contraseña 
+
+----Dentro del servidor Linux-----
+
+nano ~/.ssh/authorized.keys | Aqui pego mi contraseña 
+
+
+
+
+
