@@ -1,0 +1,111 @@
+Comandos usados practica 1
+
+============================================
+
+sudo dnf install nginx -y  | Instalar server web
+sudo systemctl enable --now nginx  | Habilitar el servicio web
+sudo firewall-cmd --permanent --add-port=80/tcp | Habilitar puerto 80
+sudo firewall-cmd --permanent --add-port=8080/tcp | Habilitar Puerto 8080
+sudo firewall-cmd --reload | Guardar configuración en el firewall
+sudo mkdir -p /usr/share/nginx/prueba |Crear apartado para la pagina web
+sudo mkdir -p /usr/share/nginx/matricula | Crear Apartado para la otra pagina web
+sudo nano /usr/share/nginx/prueba/index.html | Editar mi pagina web
+sudo nano /usr/share/nginx/matricula/index.html | Editar la otra pagina web 
+sudo nano /etc/nginx/conf.d/matricula.conf | Configurar el host para escuchar desde el puerto 80
+------------------Escuchar desde puerto 80------------------
+server {
+    listen 80;
+    server_name prueba.local;
+    root /usr/share/nginx/prueba;
+    index index.html;
+}
+----------------------------------------------------------------
+sudo nano /etc/nginx/conf.d/prueba.conf | Configurar el host para escuchar desde el puerto 8080
+
+------------------Escuchar desde puerto 8080-----------------
+
+server {
+    listen 8080;
+    server_name matricula.local;
+    root /usr/share/nginx/matricula;
+    index index.html;
+}
+---------------------------------------------------------------
+
+sudo nginx -t |Iniciar el servicio web
+sudo systemctl restart nginx | Reiniciar el servicio para comprobar resultado
+
+
+Comandos usados practica 2
+
+============================================
+sudo dnf install -y postfix s-nail | Instalar Postfix
+
+sudo systemctl enable --now postfix | Habilitar Postfix
+
+sudo postconf -e "relayhost = [smtp.gmail.com]:587" | # 1. Definir el servidor de Gmail como relay
+
+sudo postconf -e "smtp_sasl_auth_enable = yes" | # 2. Habilitar la autenticación SASL (para iniciar sesión)
+
+sudo postconf -e "smtp_sasl_password_maps =  hash:/etc/postfix/sasl_passwd" | # 3. Indicar dónde está el archivo de contraseñas
+
+sudo postconf -e "smtp_sasl_security_options = noanonymous" 
+|# 4. No permitir inicios de sesión anónimos
+
+sudo postconf -e "smtp_use_tls = yes" | # 5. Forzar el uso de TLS (conexión segura)
+
+sudo postconf -e "smtp_tls_CAfile = /etc/pki/tls/certs/ca-bundle.crt"
+
+
+sudo nano /etc/postfix/sasl_passwd [smtp.gmail.com]:587    eliezelesjimenez@gmail.com:
+
+sudo chmod 600 /etc/postfix/sasl_passwd
+
+sudo postmap /etc/postfix/sasl_passwd
+
+
+sudo nano /etc/postfix/main.cf | Configurar Postfix
+
+echo "Nombre: Ezequiel Jimenez | Matricula: 20250863" | mail -s "MambruSeFueALaGuerra" os3conadrian@gmail.com
+
+
+---------------------------------------------
+
+sudo systemctl restart postfix | Reiniciar el servicio.
+
+
+
+
+
+Comandos usados practica 3
+
+============================================
+
+sudo dnf install cups -y
+
+sudo systemctl enable --now cups
+
+sudo nano /etc/cups/cupsd.conf
+------agregar ------
+en <Location />, <Location /admin> y <Location /admin/conf>
+
+Order allow,deny
+Allow @LOCAL
+
+
+sudo systemctl restart cups
+
+sudo firewall-cmd --add-port=631/tcp --permanent
+
+sudo firewall-cmd --reload
+
+sudo dnf install cups-pdf -y
+
+sudo systemctl restart cups
+
+lpstat -p
+
+http://<IP_DEL_SERVIDOR>:631/printers/CUPS-PDF | Impresora Cliente. 
+
+
+
