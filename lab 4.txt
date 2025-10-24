@@ -81,31 +81,31 @@ Comandos usados practica 3
 
 ============================================
 
-sudo dnf install cups -y
+sudo dnf install cups -y | Instalar Servidor de Impresion
 
-sudo systemctl enable --now cups
+sudo dnf install cups-pdf -y | Instalar la extension del pdf
 
-sudo nano /etc/cups/cupsd.conf
+
+sudo systemctl enable --now cups | Habilitar el Servidor de Impresion
+
+sudo nano /etc/cups/cupsd.conf | Editar el archivo de configuracion de correo
 ------agregar ------
 en <Location />, <Location /admin> y <Location /admin/conf>
 
 Order allow,deny
-Allow @LOCAL
+Allow all
 
-
+--------------------------------------------
 sudo systemctl restart cups
 
-sudo firewall-cmd --add-port=631/tcp --permanent
+sudo firewall-cmd --add-service=ipp --permanent
 
 sudo firewall-cmd --reload
 
-sudo dnf install cups-pdf -y
-
 sudo systemctl restart cups
 
-lpstat -p
+http://<IP_DEL_SERVIDOR>:631 | Servidor de Impresion
 
-http://<IP_DEL_SERVIDOR>:631/printers/CUPS-PDF | Impresora Cliente. 
 
 
 
