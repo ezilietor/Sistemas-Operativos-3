@@ -1,0 +1,183 @@
+Comandos usados practica 1
+
+============================================
+sudo dnf install openssh-client openssh-server | Instalar ssh si no lo tienes
+
+ssh-keygen -t rsa | Generar llave para no pedir contraseña al entrar en Linux
+
+ssh-copy-id destino@ip   | Para permitir el acceso sin password
+
+mkdir /home/usuario/carpeta | Creo Carpeta
+
+touch /home/usuario/carpeta/archivo{1..100}.txt | Creo 100 archivos
+
+ls /home/usuario/carpeta  | Confirmo que se crearon los archivos
+
+rsync -avz ~/carpeta/ destino@ip:/Escritorio/destino/
+
+nano ~/sincronizar.sh | Crear el script de sincronización
+
+------------detro del script-------
+#!/bin/bash
+rsync -az ~/carpeta/ destino@ip:/Escritorio/destino/
+
+---
+
+chmod +x ~/sincronizar.sh
+crontab -e | Para abrir crontab y crear el proceso
+
+---------------dentro de crontab---------
+* * * * * /home/Server/sincronizar.sh
+---
+touch /carpeta/prueba.txt | para confirmar que se sincronizan
+
+
+
+Comandos usados practica 2
+
+============================================
+sudo nano /etc/hosts | Aqui vamos a establecer nombres de los nodos
+
+sudo hostnamectl set-hostname piedra | Establezco el nombre de host en mi primer servidor.
+sudo hostnamectl set-hostname papel  | Establezco el nombre de host en mi segundo servidor.
+
+sudo dnf update -y | para actualizar el sistema en ambos nodos.
+
+En ambos nodos ejecuto
+
+sudo dnf install pcs pacemaker corosync fence-agents-all -y | Instalar pacemaker para realizar las ip flotante
+
+sudo systemctl start pcsd | Iniciar el servicio
+sudo systemctl enable pcsd | Habilito mi servicio
+
+sudo firewall-cmd --permanent --add-service=high-availability | Habilitar el trafico de HA en ambos firewall
+
+sudo firewall-cmd --reload | Establecer mi configuración en el firewall
+
+sudo echo "contraseña" | passwd --stdin hacluster | Aquí creo la contraseña y el usuario de hacluster
+
+En el nodo 1 o principal
+
+sudo pcs host auth piedra papel -u hacluster -p contraseña |
+
+sudo pcs cluster setup cluster piedra papel | creo el cluster.  Aquí 'cluster' es el nombre que yo elegi para mi cluster.
+
+
+En ambos nodos ejecuto
+
+sudo pcs cluster start --all | Inicio el cluster
+
+sudo pcs cluster enable --all | Habilitar el cluster en el arranque
+
+sudo pcs status | Comprobar el estado después de unos segundos
+
+sudo pcs property set stonith-enabled=false | Deshabilitar STONITH
+
+
+sudo pcs property set no-quorum-policy=ignore | Ignorar las políticas de quorum, hago esto porque solo tengo 2 cluster Ojo.
+
+En el nodo principal
+
+sudo pcs resource create IP_Flotante ocf:heartbeat:IPaddr2 ip=10.0.0.150 cidr_netmask=24 op monitor interval=30s
+
+sudo pcs status | Aquí debería aparecer que se creo la ip flotante
+
+#####Ya podemos apagar la maquina y hacer ping desde el host o otra maquina que no sea parte de los nodos y comprobaremos que los servicios siguen funcionando a pesar de que el nodo principal esta apagado ####
+
+En el nodo 2 ejecutamos
+
+sudo pcs status | Esto comprobara que la ip flotante ahora esta en el nodo2 a pesar de que el nodo principal esta apagado
+
+Comandos usados practica 3
+
+============================================
+
+En ambos servidores
+
+sudo dnf install httpd -y | Instalar el servicio de apache 2
+
+sudo systemctl start httpd 	| Iniciar apacha2
+
+sudo systemctl enable httpd  | Habilitar apache2 
+
+sudo firewall-cmd --add-service=http --permanent | Habilitar el servicio en el firewall  
+
+sudo firewall-cmd --reload | Establecer la configuración de firewall 
+
+sudo dnf install keepalived -y | Instalar keep alive
+
+sudo firewall-cmd --add-protocol=vrrp --permanent   | Habilitarlo en el firewall 
+
+sudo firewall-cmd --reload | Establecer la configuración
+
+En el nodo 1 hacer lo siguiente 
+
+sudo nano /etc/keepalived/keepalived.conf | Configurar el keepalived
+
+------dentro de la configuración lo siguiente-----
+
+! Configuration File for keepalived
+
+global_defs {
+   router_id LVS_DEVEL
+}
+
+vrrp_instance VI_1 {
+    # Define este como el servidor principal
+    state MASTER
+    # La interfaz de red que monitoreará
+    interface ens33
+    virtual_router_id 51
+
+    # El MASTER debe tener una prioridad más alta
+    priority 101
+
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 12345
+    }
+
+    # La IP Flotante (Virtual IP)
+    virtual_ipaddress {
+        10.0.0.125/24
+    }
+}
+
+En el nodo 2 hacer lo siguiente
+sudo nano /etc/keepalived/keepalived.conf | Configurar el keepalived
+
+----------dentro del keepalived-------------
+
+! Configuration File for keepalived
+
+global_defs {
+   router_id LVS_DEVEL
+}
+
+vrrp_instance VI_1 {
+    # Define este como el servidor de respaldo
+    state BACKUP
+    # La interfaz de red que monitoreará
+    interface ens33
+    virtual_router_id 51
+
+    # El BACKUP debe tener una prioridad más baja
+    priority 100
+
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 12345
+    }
+
+    # La IP Flotante (Virtual IP)
+    virtual_ipaddress {
+        10.0.0.125/24
+    }
+}
+En ambos servidores 
+
+sudo systemctl start keepalived | Iniciar el keepalived 
+
+sudo systemctl enable keepalived | Habilitarlo 
