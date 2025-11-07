@@ -1,0 +1,187 @@
+Comandos usados practica 1
+
+============================================
+Simétrico
+Gpg2 -c archivo.txt | Cifrar un archivo
+Gpg2 -d archivo.txt.gpg > archivodescrifrado.txt | Descifrar un archivo
+Asimétrico
+Gpg2 --full-generate-key  	| Crear llave
+Gpg2 -e -r (usuario) archivo.txt  | Cifrar el archivo
+Gpg2 -d archivo.txt.gpt > archivodescrifrado.txt | Descifrarlo.
+
+Comandos usados practica 2
+
+============================================
+sudo dnf install httpd vsftpd openssh-server -y | Instala los servicios que usan el puerto 80,22,21
+
+sudo systemctl enable --now httpd | habilitar http
+sudo systemctl enable --now vsftpd | Habilitar
+vsftpdsudo systemctl enable --now sshd | habilitar ssh
+
+
+sudo firewall-cmd --permanent --add-service=http | habilitar http en firewall
+sudo firewall-cmd --permanent --add-service=ftp | Habilitar ftp en firewall
+sudo firewall-cmd --permanent --add-service=ssh | habilitar ssh en firewall
+sudo firewall-cmd --reload
+
+curl localhost | Probar acceso de http
+ftp localhost | Probar acceso de vsftp
+ssh localhost 	| probar acceso de ssh
+
+sudo iptables -A INPUT -p tcp --dport 80 -j DROP | Bloquea el puerto 80 con iptables
+sudo iptables -D INPUT -p tcp --dport 80 -j DROP | Habilitar el puerto 80 con iptables
+sudo iptables -A INPUT -p tcp --dport 22 -j DROP | Bloquea el puerto 22 con iptables
+sudo iptables -D INPUT -p tcp --dport 22 -j DROP | Habilitar el puerto 22 con iptables
+sudo iptables -A INPUT -p tcp --dport 21 -j DROP | Bloquea el puerto 21 con iptables
+sudo iptables -D INPUT -p tcp --dport 21 -j DROP | Habilitar el puerto 21 con iptables
+
+sudo firewall-cmd --permanent --add-port=80/tcp | Habilitar puerto 80
+sudo firewall-cmd --permanent --add-port=22/tcp | Habilitar puerto 22
+sudo firewall-cmd --permanent --add-port=21/tcp | Habilitar puerto 21
+sudo firewall-cmd --reload
+sudo firewall-cmd --permanent --remove-port=80/tcp | Deshabilitar puerto 80
+sudo firewall-cmd --permanent --remove-port=22/tcp | Deshabilitar puerto 22
+sudo firewall-cmd --permanent --remove-port=21/tcp | Deshabilitar puerto 21
+sudo firewall-cmd --reload
+Ojo hay que deshabilitar tanto el puerto como el servicio para que deje de correr.
+sudo firewall-cmd --permanent --remove-service=ssh | Quitar el servicio de ssh del Firewall
+sudo firewall-cmd --permanent --remove-service=ftp | Quitar el servicio de ftp del Firewal
+sudo firewall-cmd --permanent --remove-service=http | Quitar el servicio de http del Firewal
+
+
+Comandos usados practica 3
+
+============================================
+
+INSTALACIÓN DE IDS SNORT
+
+
+# Actualizar sistema
+sudo dnf update -y && sudo yum update -y
+
+
+# Habilitamos los repositorios necesarios (el primero es EPEL y el segundo es CodeReady Builder (requiere subscripción en RHEL))
+sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
+sudo dnf config-manager --set-enabled crb
+
+
+# Ahora, para configurar librerías, nos ubicamos en el archivo:
+sudo nano /etc/ld.so.conf.d/local.conf   
+
+# Agregamos:
+/usr/local/lib
+/usr/local/lib64
+
+# Guardamos, cerramos, y actualizamos el caché de librerías:
+sudo ldconfig
+
+
+# Instalar dependencias
+sudo dnf install flex bison gcc gcc-c++ make cmake autoconf libtool git nano unzip wget \
+libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel luajit-devel \
+pkgconfig pkgconf libunwind-devel libnfnetlink-devel libnetfilter_queue-devel \
+libmnl-devel xz-devel gperftools libuuid-devel hyperscan hyperscan-devel -y
+
+
+# Instalar la dependencia libdnet desde GitHub:
+cd ~
+git clone https://github.com/dugsong/libdnet.git
+cd libdnet
+./configure --without-check
+make
+sudo make install
+sudo ldconfig
+
+
+# Instalar libdaq (Data Acquisition Library, la biblioteca utilizada por Snort para la captura de paquetes de red). Lo haremos clonando un repositorio con los paquetes de instalación:
+git clone https://github.com/snort3/libdaq.git
+cd libdaq && ./bootstrap && ./configure && make && sudo make install
+sudo ldconfig && cd ..
+
+# Instalar libpcre2 y su paquete de desarrollo (necesaria para el procesamiento de expresiones regulares):
+sudo dnf install pcre2 pcre2-devel -y
+
+
+# Instalar Snort (estaremos clonando el repositorio de la instalación)
+git clone https://github.com/snort3/snort3.git
+cd snort3
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig:$PKG_CONFIG_PATH
+export CFLAGS="-O3"
+export CXXFLAGS="-O3 -fno-rtti"
+./configure_cmake.sh --prefix=/usr/local/snort --enable-tcmalloc
+cd build/ && make -j$(nproc) && sudo make -j$(nproc) install
+cd ../.. && sudo ldconfig
+
+
+# Crear el enlace simbólico (acceso directo) desde la ubicación donde se instaló Snort manualmente hacia una ubicación que está en el PATH del sistema:
+sudo ln -s /usr/local/snort/bin/snort /usr/bin/snort
+
+
+# Verificar la instalación:
+snort -V
+
+
+# Configurar snort.lua para definir la red interna:
+sudo nano /usr/local/snort/etc/snort/snort.lua   
+
+
+# Editamos la línea "HOME_NET" con nuestra dirección IP y máscara:
+HOME_NET = '10.0.0.17/24'
+
+
+# Validamos la sintaxis del archivo (verificar que todo esté en orden):
+snort -T -c /usr/local/snort/etc/snort/snort.lua
+
+
+# Activar modo promiscuo (configuración especial de una tarjeta de red (NIC) que permite que esta capture y procese todos los paquetes que pasan por la red)
+sudo ip link set dev ens33 promisc on
+
+# Crear reglas de tráfico: ingresamos al archivo correspondiente...
+sudo nano /usr/local/snort/etc/snort/local.rules
+
+# Luego, agregamos las reglas:
+alert icmp any any -> $HOME_NET any (msg:"ICMP Traffic Detected"; sid:10000001;)
+alert tcp any any -> $HOME_NET 21 (msg:"FTP Traffic Detected on port 21"; sid:10000002;)
+alert tcp any any -> $HOME_NET 22 (msg:"SSH Traffic Detected on port 22"; sid:10000003;)
+alert tcp any any -> $HOME_NET 80 (msg:"HTTP Traffic Detected on port 80"; sid:10000004;)
+
+
+# Ejecutamos Snort con las reglas creadas:
+sudo snort -c /usr/local/snort/etc/snort/snort.lua \
+-R /usr/local/snort/etc/snort/local.rules \
+-i ens33 -A alert_fast -s 65535 -k none
+
+
+Comandos usados practica 4
+
+============================================
+
+sudo dnf install google-authenticator -y
+
+Mandar el qr a authenticator
+
+sudo nano /etc/pam.d/sshd
+auth required pam_google_authenticator.so 
+---------Agregar lo siguiente
+
+
+auth required pam_google_authenticator.so no_strict_owner (agregar )
+auth required pam_unix.so (agregar)
+auth substack password-auth
+auth include postlogin
+account include password-auth (agregar)
+
+Configurar ssh para solicitar 2Fa
+sudo nano /etc/ssh/sshd_config
+
+ChallengeResponseAuthentication yes
+UsePAM yes
+
+Luego salir y dar permisos a google 
+
+Dar permisos a Google
+sudo chown server:server /home/Server/.google_authenticator
+sudo chmod 400 /home/server/.google_authenticator
+
+
