@@ -1,0 +1,103 @@
+Comandos usados practica 1
+
+============================================
+Server
+sudo dnf install nfs-utils -y | Instala nfs
+sudo systemctl enable --now nfs-server | Habilitar el servicio 
+sudo systemctl start nfs-server   | Habilitar el servicio 
+sudo mkdir /OS3   | Crear el directorio donde estaran los archivos
+cd /OS3   | Abrir la carpeta 
+sudo touch Adrian{1..100}.txt   | Crear 1000 archivos txt
+chmod -R  777 /OS3   | Dar todos los permisos al directorio 
+ls /OS3    | Comprobar los archivos dentro del directorio 
+
+sudo nano /etc/exports   | Configurar y montar nfs en la maquina del cliente
+-----------------------dentro del archivo------------------------
+/OS3 IP_Cliente(rw,sync,no_subtree_check)
+------------------------------------------------------------------------
+sudo exportfs -ra    | Exportar la montura
+sudo exportfs -v   | Exportar 
+sudo firewall-cmd --permanent --add-service=nfs    | Habilitar los servicios en el firewall
+sudo firewall-cmd --permanent --add-service=mountd
+sudo firewall-cmd --permanent --add-service=rpc-bind
+sudo firewall-cmd --reload
+
+Cliente
+sudo dnf install nfs-utils -y       | Instalar nfs en el cliente
+sudo mkdir /mnt/OS3          | Crear el directorio que se sincronizara 
+sudo mount IP_Server:/OS3 /mnt/OS3      | Montar el directorio del servidor 
+ls /mnt/OS3      | Comprobar los archivos 
+
+-----------------Montaje automatico cliente----------
+
+
+sudo nano /etc/fstab      | Carpeta para que la montura se haga cada vez que se reinicie la maquina
+
+
+------dentro del archivo-----
+IP_Server:/OS3 /mnt/OS3 nfs defaults 0 0
+-------------
+sudo mount -a      | Montar todo 
+ls /mnt/OS3      | Comprobar los archivos
+
+Reiniciar cliente y luego comprobar 
+
+
+
+Comandos usados practica 2
+
+============================================
+
+
+sudo dnf install samba samba-client samba-common -y
+
+sudo mkdir -p /srv/samba/adrian
+
+sudo groupadd sambagrupo
+
+sudo useradd -M -s /sbin/nologin adrianuser -G sambagrupo
+
+sudo smbpasswd -a adrianuser
+
+sudo chown -R adrianuser:sambagrupo /srv/s
+amba/adrian
+
+sudo chmod -R 777 /srv/samba/adrian
+
+cd /srv/samba/adrian
+
+touch adrian{1..100}.txt
+
+sudo nano /etc/samba/smb.conf
+--------Añadir lo siguiente------------
+[AdrianShare]
+        path = /srv/samba/adrian
+        writable = yes
+        read only = no
+        browseable = yes
+        valid users = adrianuser
+        create mask = 0755
+        directory mask = 0755
+---------------------------
+
+setenforce 0  - Choca con samba y hay que usarlo 
+
+sudo setsebool -P samba_export_all_rw on - Para que SElinux no detenga los permisos
+
+sudo systemctl restart smb
+
+sudo firewall-cmd  --permanent --add-service=samba 
+
+En Windows con la cmd en administrador
+
+net use * /delete
+
+Luego W+R y ahi poner 
+\\IP_server
+
+Seleccionar la carpeta compartida y darle a conectar unidad de red
+
+
+Comandos usados practica 3
+
+============================================
