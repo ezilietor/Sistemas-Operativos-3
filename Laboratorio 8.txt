@@ -1,0 +1,141 @@
+Comandos usados practica 1 
+
+============================================
+
+Instalar los plugins para dnf
+ sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+Instalar Docker Engine
+sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+Iniciar Docker Engine
+sudo systemctl enable --now docker
+
+Descargar la Imagen de nginx
+sudo docker pull nginx
+
+Crear la carpeta
+Sudo mkdir -p /home/website
+
+Crear la pagina html
+Sudo nano /home/website/index.html
+
+---------------Dentro del index--------------------------
+<html>
+<head>
+<title> Pagina ITLA </title>
+</head>
+<h2> Ezequiel Jimenez </h2>
+<h3> Matricula 2025-0863 </h3>
+</html>
+---------------------------------------------------
+
+Añadir el volumen 
+sudo docker run -d \
+  --name mi-servidor-nginx \
+  -p 8888:80 \
+  -v /home/website:/usr/share/nginx/html:z \
+  nginx 
+
+Verificacion del firewall
+sudo firewall-cmd --permanent --add-port=8888/tcp
+sudo firewall-cmd --reload
+
+Verificar que el contenedor subio 
+Sudo docker ps
+Eliminar mi contenedor (no va en la practica solo por si acaso)
+sudo docker rm nombre
+
+Comandos usados practica 2
+
+============================================
+
+Eliminar cualquier registro de portainer (En caso de haberlo instalado anteriormente)
+sudo docker stop portainer
+sudo docker rm -f portainer
+sudo docker volume rm portainer_data
+
+Descargar portainer
+sudo docker volume create portainer_data
+
+Cambiar version
+docker pull portainer/portainer-ce:2.20.2
+
+Ejecutar portainer
+sudo docker run -d \
+     -p 8000:8000 \
+     -p 9443:9443 \
+     --name portainer \
+    --restart=always \
+    --security-opt label=disable \
+    -v /var/run/docker.sock:/var/run/docker.sock:Z \
+    -v portainer_data:/data \
+    portainer/portainer-ce:2.20.2
+
+Habilitar el firewall
+Sudo firewall-cmd --permanent --add-port=9443/tcp
+Sudo firewall-cmd --reload
+
+Por si Selinux lo bloquea
+sudo setenforce 0
+
+Dar permisos totales al archivo
+sudo chmod 666 /var/run/docker.sock
+https://10.0.0.200:9443 entrar a mi portainer
+
+contraseña: jajajajajaja
+
+Comandos usados practica 3
+
+===========================================
+
+
+Crear carpeta para el wordpress
+mkdir ~/mi-wordpress
+cd ~/mi-wordpress
+
+Crear el archivo docker-compose
+nano docker-compose.yml
+
+---------dentro del archivo -------
+version: '3.8'
+services:
+  db:
+    image: mysql:5.7
+    container_name: wordpress_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 0863  
+      MYSQL_DATABASE: wordpress            
+      MYSQL_USER: admin                  
+      MYSQL_PASSWORD: 0863         
+    volumes:
+      - db_data:/var/lib/mysql             
+  # 2. Contenedor de la Aplicación (WordPress)
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    container_name: wordpress_app
+    restart: always
+    ports:
+      - "8080:80"                          
+    environment:
+      WORDPRESS_DB_HOST: db:3306           
+      WORDPRESS_DB_USER: admin           
+      WORDPRESS_DB_PASSWORD: 0863   
+      WORDPRESS_DB_NAME: wordpress         
+    volumes:
+      - ./wp_content:/var/www/html:z       
+volumes:
+  db_data:
+-------------------------------------------------
+
+Luego guardar el documento y desplegar docker
+sudo docker compose up -d
+
+Firewall
+sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
+Ya puedo abrir la pagina web del wordpress con mi ip
