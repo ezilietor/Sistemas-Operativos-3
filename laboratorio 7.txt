@@ -101,3 +101,27 @@ Seleccionar la carpeta compartida y darle a conectar unidad de red
 Comandos usados practica 3
 
 ============================================
+# Crear directorios persistentes
+
+sudo mkdir -p /srv/samba/{etc,lib}
+sudo chown -R 0:0 /srv/samba
+
+#Crear el contenedor del AD-DC
+docker run -d \
+  --name samba-ad-dc \
+  --hostname dc1.so3.inet \
+  --net host \
+  -v /srv/samba/etc:/etc/samba \
+  -v /srv/samba/lib:/var/lib/samba \
+  -e DOMAIN=SO3 \
+  -e REALM=SO3.INET \
+  -e DNS_BACKEND=SAMBA_INTERNAL \
+  -e ADMIN_PASSWORD='0863' \
+  infrastructureascode/samba-ad-dc
+
+#Crear el usuario lanegracubana dentro del domino 
+docker exec -it samba-ad-dc samba-tool user create lanegracubana '20250863'
+
+#Verificar que el AD funciona
+docker exec -it samba-ad-dc samba-tool domain level show
+docker exec -it samba-ad-dc kinit administrator
