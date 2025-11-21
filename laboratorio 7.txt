@@ -114,40 +114,61 @@ sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin dock
 #Iniciar Docker Engine
 sudo systemctl enable --now docker
 
+#Liberar el puerto para el DNS de Samba
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+sudo systemctl stop systemd-resolved
+sudo systemctl disable systemd-resolved
+
+#Asegurar dns temporal para que el host tenga internet
+sudo unlink /etc/resolv.conf
+echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+
 #Correr el servicio de docker
 docker run -d \
   --name samba-dc \
   --hostname dc1 \
   --domainname so3.inet \
+  --network host \
   --privileged \
-  -p 53:53/tcp -p 53:53/udp \
-  -p 88:88/tcp -p 88:88/udp \
-  -p 135:135/tcp \
-  -p 139:139/tcp \
-  -p 389:389/tcp -p 389:389/udp \
-  -p 445:445/tcp \
-  -p 464:464/tcp \
-  -p 636:636/tcp \
-  -p 3268:3268/tcp \
-  -p 3269:3269/tcp \
   -v samba_data:/var/lib/samba \
+  -v /etc/localtime:/etc/localtime:ro \
   ubuntu:latest \
   tail -f /dev/null
 
 #Entrar al contenedor 
 sudo docker exec -it samba-dc /bin/bash
 
-#Instalar samba y tools
+#Instalar samba y actualizar herramientas
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y samba krb5-config winbind smbclient iproute2
 
-#Ejecutar el comando de provision 
+#Ejecutar el comando de provision y borrar cualquier configuracion previa
 rm /etc/samba/smb.conf
+rm -rf /var/lib/samba/private/*
 samba-tool domain provision --use-rfc2307 --realm=SO3.INET --domain=SO3 --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass="Admin1234!"
+
+#Ejecutar el controlador del dominio y aseguirar que tenga la IP de CentOS
+samba-tool domain provision \
+--use-rfc2307 \
+--realm=SO3.INET \
+--domain=SO3 \
+--server-role=dc \
+--dns-backend=SAMBA_INTERNAL \
+--adminpass="Admin1234!" \
+--option="dns forwarder = 8.8.8.8" \
+--host-ip=10.0.0.17
 
 #Antes de crear usuario para contraseña
 samba-tool domain passwordsettings set --complexity=off
 samba-tool domain passwordsettings set --min-pwd-length=6
+samba-tool domain passwordsettings set --max-pwd-age=0
+
+#Copiar el kerberos
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+
+#DNS temporal para el contenedor
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 #Crear usuario 
 useradd lanegracubana
@@ -158,8 +179,8 @@ samba-tool user create lanegracubana 20250863
 #arrancar samba 
 samba -D
 
-#apagar el firewall 
-sudo systemctl stop firewalld
+#Verificacion de que todo esta bien 
+nslookup so3.inet
 
 #En el cmd ejecutar 
 nslookup so3.inet 10.0.0.17
