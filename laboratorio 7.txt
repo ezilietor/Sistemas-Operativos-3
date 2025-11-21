@@ -103,25 +103,55 @@ Comandos usados practica 3
 ============================================
 # Crear directorios persistentes
 
-sudo mkdir -p /srv/samba/{etc,lib}
-sudo chown -R 0:0 /srv/samba
+# Descargar git 
+sudo dnf install git -y 
 
-#Crear el contenedor del AD-DC
+#Correr el servicio de docker
 docker run -d \
-  --name samba-ad-dc \
-  --hostname dc1.so3.inet \
-  --net host \
-  -v /srv/samba/etc:/etc/samba \
-  -v /srv/samba/lib:/var/lib/samba \
-  -e DOMAIN=SO3 \
-  -e REALM=SO3.INET \
-  -e DNS_BACKEND=SAMBA_INTERNAL \
-  -e ADMIN_PASSWORD='0863' \
-  infrastructureascode/samba-ad-dc
+  --name samba-dc \
+  --hostname dc1 \
+  --domainname so3.inet \
+  --privileged \
+  -p 53:53/tcp -p 53:53/udp \
+  -p 88:88/tcp -p 88:88/udp \
+  -p 135:135/tcp \
+  -p 139:139/tcp \
+  -p 389:389/tcp -p 389:389/udp \
+  -p 445:445/tcp \
+  -p 464:464/tcp \
+  -p 636:636/tcp \
+  -p 3268:3268/tcp \
+  -p 3269:3269/tcp \
+  -v samba_data:/var/lib/samba \
+  ubuntu:latest \
+  tail -f /dev/null
 
-#Crear el usuario lanegracubana dentro del domino 
-docker exec -it samba-ad-dc samba-tool user create lanegracubana '20250863'
+#Entrar al contenedor 
+sudo docker exec -it samba-dc /bin/bash
 
-#Verificar que el AD funciona
-docker exec -it samba-ad-dc samba-tool domain level show
-docker exec -it samba-ad-dc kinit administrator
+#Instalar samba y tools
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y samba krb5-config winbind smbclient iproute2
+
+#Ejecutar el comando de provision 
+rm /etc/samba/smb.conf
+samba-tool domain provision --use-rfc2307 --realm=SO3.INET --domain=SO3 --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass="Admin1234!"
+
+#Antes de crear usuario para contraseña
+samba-tool domain passwordsettings set --complexity=off
+samba-tool domain passwordsettings set --min-pwd-length=6
+
+#Crear usuario 
+useradd lanegracubana
+
+#AÑAdir el usuario al Windows
+samba-tool user create lanegracubana 20250863
+
+#arrancar samba 
+samba -D
+
+#En el cmd ejecutar 
+nslookup so3.inet 10.0.0.17
+
+#Hacer ping a la ip del docker
+route -p add 172.17.0.0 mask 255.255.0.0 10.0.0.17
