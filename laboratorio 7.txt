@@ -157,7 +157,7 @@ samba-tool domain provision \
 --dns-backend=SAMBA_INTERNAL \
 --adminpass="Admin1234!" \
 --option="dns forwarder = 8.8.8.8" \
---host-ip=10.0.0.17
+--host-ip=MiIPCentOS
 
 #Antes de crear usuario para contraseña
 samba-tool domain passwordsettings set --complexity=off
@@ -174,7 +174,7 @@ echo "nameserver 127.0.0.1" > /etc/resolv.conf
 useradd lanegracubana
 
 #AÑAdir el usuario al Windows
-samba-tool user create lanegracubana 20250863
+samba-tool user create lanegracubana matricula
 
 #arrancar samba 
 samba -D
@@ -184,7 +184,7 @@ nslookup so3.inet
 
 En Windows 
 
-#Configurar el dns con la IP de mi maquina de CentOS 10.0.0.17
+#Configurar el dns con la IP de mi maquina de CentOS 
 
 #En el cmd ejecutar 
 ping so3.inet
@@ -197,5 +197,5 @@ contraseña: Admin1234!
 
 En pantalla de bloqueo 
 Usuario: lanegracubana
-contraseña: 20250863
+contraseña: matricula
 
