@@ -182,11 +182,13 @@ samba -D
 #Verificacion de que todo esta bien 
 nslookup so3.inet
 
-#En el cmd ejecutar 
-nslookup so3.inet 10.0.0.17
+En Windows 
 
-#Hacer ping a la ip del docker
-route -p add 172.17.0.0 mask 255.255.0.0 10.0.0.17
+#Configurar el dns con la IP de mi maquina de CentOS 10.0.0.17
+
+#En el cmd ejecutar 
+ping so3.inet
+
 
 #En el windows
 el Dominio: SO3.inet
