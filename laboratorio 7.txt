@@ -168,11 +168,11 @@ nslookup so3.inet 10.0.0.17
 route -p add 172.17.0.0 mask 255.255.0.0 10.0.0.17
 
 #En el windows
-el Dominio: SO3.net
+el Dominio: SO3.inet
 Usuario: Administrator
 contraseña: Admin1234!
 
 En pantalla de bloqueo 
-Usuario: laanegracubana
+Usuario: lanegracubana
 contraseña: 20250863
 
