@@ -226,15 +226,15 @@ sudo nano /etc/ansible/hosts
 [linux]
 os3vm ansible_host=<IP_MAQUINA_DIGITALOCEAN> ansible_user=ansible ansible_ssh_private_key_file=/home/ansible/.ssh/id_ed25519
 
+
 [win]
-10.0.0.19 ansible_user=ansible ansible_password=0863
+10.0.0.19 ansible_user=ansible2 ansible_password=0863
 [win:vars]
 ansible_connection=winrm
 ansible_port=5985
 ansible_winrm_scheme=http
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
-
 ------------------------------------------------------------------
 
 #Luego hacer prueba de ping 
@@ -244,3 +244,73 @@ ansible win -m win_ping
 #Este comando para comprobar en el powershell que funciona todo
 winrm enumerate winrm/config/listener
 
+Practica 4
+
+==============================================
+
+#Crear el archivo
+nano Correo.txt 
+
+
+#Enviar el archivo 
+ansible win -i hosts -m win_copy -a 'src=/home/ansible/correo.txt dest="C:\\Users\\ansible2\\Documents\\correo.txt"'
+
+
+#Reiniciar la VM
+ansible linux -m reboot -b -K
+
+Practica 5
+
+==========================================================
+
+#Crear el archivo notepad
+nano notepad.yml
+
+---------------Dentro del Notepad-----------------
+---
+- name: Instalar Notepad++ en Windows
+  hosts: win
+  gather_facts: no    
+  tasks:
+    - name: Instalar chocolatey
+      win_chocolatey:
+        name: chocolatey
+        state: present
+
+    - name: Instalar Notepad++
+      win_chocolatey:
+        name: notepadplusplus
+        state: present
+        version: '8.5.2'
+
+---------------------------------------
+
+#Ejecutar el yml 
+ansible-playbook notepad.yml
+
+
+#Creamos el yml de nginx 
+sudo nginx.yml
+
+-------------Dentro del archivo del NGINX------------
+---
+- name: Crear el NGINX
+  hosts: Linux 
+  become: yes    
+  tasks:
+    - name: Instalar NGINX
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Iniciar servicio Nginx y habilitarlo al arranque
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+-------------------------------------
+
+#Ejecuto el yml de NGINX
+ansible-playbook nginx.yml -K
