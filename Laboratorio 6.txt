@@ -56,102 +56,198 @@ Comandos usados practica 3
 INSTALACIÓN DE IDS SNORT
 
 
-# Actualizar sistema
-sudo dnf update -y && sudo yum update -y
-
-
-# Habilitamos los repositorios necesarios (el primero es EPEL y el segundo es CodeReady Builder (requiere subscripción en RHEL))
-sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
+#. Actualizar
+sudo dnf update -y
+sudo dnf install -y epel-release
 sudo dnf config-manager --set-enabled crb
+sudo dnf update -y
 
+#. Instalar dependencias esenciales.
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y \
+ flex bison gcc gcc-c++ make cmake cmake3 autoconf libtool git wget unzip nano \
+ libpcap libpcap-devel pcre2 pcre2-devel luajit luajit-devel \
+ openssl openssl-devel zlib zlib-devel hwloc hwloc-devel \
+ pkgconfig pkgconf libunwind libunwind-devel libmnl libmnl-devel \
+ libnetfilter_queue libnetfilter_queue-devel gperftools gperftools-devel \
+ uuid-devel xz-devel numactl numactl-devel hyperscan hyperscan-devel || true
 
-# Ahora, para configurar librerías, nos ubicamos en el archivo:
-sudo nano /etc/ld.so.conf.d/local.conf   
+#. por Hyperscan (solo si no funciona OJO)
 
-# Agregamos:
-/usr/local/lib
-/usr/local/lib64
+sudo dnf install -y gperftools gperftools-devel
+sudo dnf install -y pcre2 pcre2-devel
+sudo dnf install -y libpcap libpcap-devel
+sudo dnf install -y luajit luajit-devel
+sudo dnf install -y hwloc hwloc-devel
+sudo dnf install -y boost boost-devel
+sudo dnf install -y cmake gcc-c++ make
 
-# Guardamos, cerramos, y actualizamos el caché de librerías:
-sudo ldconfig
+cd /usr/local/src
+sudo wget https://www.colm.net/files/ragel/ragel-6.10.tar.gz
+sudo tar -xzf ragel-6.10.tar.gz
+cd ragel-6.10
+sudo ./configure
+sudo make -j$(nproc)
+sudo make install
+ragel --version
 
+sudo tee /etc/profile.d/localbin.sh > /dev/null <<'EOF'
+export PATH=/usr/local/bin:$PATH
+EOF
+sudo chmod 644 /etc/profile.d/localbin.sh
+source /etc/profile
 
-# Instalar dependencias
-sudo dnf install flex bison gcc gcc-c++ make cmake autoconf libtool git nano unzip wget \
-libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel luajit-devel \
-pkgconfig pkgconf libunwind-devel libnfnetlink-devel libnetfilter_queue-devel \
-libmnl-devel xz-devel gperftools libuuid-devel hyperscan hyperscan-devel -y
-
-
-# Instalar la dependencia libdnet desde GitHub:
-cd ~
-git clone https://github.com/dugsong/libdnet.git
-cd libdnet
-./configure --without-check
-make
+cd /usr/local/src
+sudo git clone https://github.com/intel/hyperscan.git
+cd hyperscan
+sudo mkdir build && cd build
+sudo cmake3 -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_STATIC_AND_SHARED=1 ..
+sudo make -j$(nproc)
 sudo make install
 sudo ldconfig
 
+#. Compilar libdnet
+cd /home/Server
+git clone https://github.com/dugsong/libdnet.git
+cd libdnet
+./configure --without-check
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+cd ..
 
-# Instalar libdaq (Data Acquisition Library, la biblioteca utilizada por Snort para la captura de paquetes de red). Lo haremos clonando un repositorio con los paquetes de instalación:
+# Compiar lidaq
+cd /home/fred
 git clone https://github.com/snort3/libdaq.git
-cd libdaq && ./bootstrap && ./configure && make && sudo make install
-sudo ldconfig && cd ..
+cd libdaq
+./bootstrap
+./configure
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+cd ..
 
-# Instalar libpcre2 y su paquete de desarrollo (necesaria para el procesamiento de expresiones regulares):
-sudo dnf install pcre2 pcre2-devel -y
+# Variables
 
-
-# Instalar Snort (estaremos clonando el repositorio de la instalación)
-git clone https://github.com/snort3/snort3.git
-cd snort3
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig:$PKG_CONFIG_PATH
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:$PKG_CONFIG_PATH
 export CFLAGS="-O3"
 export CXXFLAGS="-O3 -fno-rtti"
+
+# Compilar Snort3
+cd /home/fred
+git clone https://github.com/snort3/snort3.git
+cd snort3
 ./configure_cmake.sh --prefix=/usr/local/snort --enable-tcmalloc
-cd build/ && make -j$(nproc) && sudo make -j$(nproc) install
-cd ../.. && sudo ldconfig
+cd build
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+cd ../..
 
-
-# Crear el enlace simbólico (acceso directo) desde la ubicación donde se instaló Snort manualmente hacia una ubicación que está en el PATH del sistema:
-sudo ln -s /usr/local/snort/bin/snort /usr/bin/snort
-
-
-# Verificar la instalación:
+# Verificación de Instalacion
+sudo ln -sf /usr/local/snort/bin/snort /usr/bin/snort
 snort -V
 
+# Configurar LUA
+sudo cp /usr/local/snort/etc/snort/snort.lua /usr/local/snort/etc/snort/snort.lua.bak
+sudo nano /usr/local/snort/etc/snort/snort.lua
 
-# Configurar snort.lua para definir la red interna:
-sudo nano /usr/local/snort/etc/snort/snort.lua   
-
-
-# Editamos la línea "HOME_NET" con nuestra dirección IP y máscara:
 HOME_NET = '10.0.0.17/24'
 
+--------SI DAQ TE DA PROBLEMAS----------------------
+cd /usr/local/src
+sudo rm -rf libdaq         
+sudo git clone https://github.com/snort3/libdaq.git
+cd libdaq
+sudo ./bootstrap
+sudo ./configure --enable-static --enable-shared
+sudo make -j$(nproc)
+sudo make install
+sudo ldconfig
 
-# Validamos la sintaxis del archivo (verificar que todo esté en orden):
+snort --daq-list
+
+
 snort -T -c /usr/local/snort/etc/snort/snort.lua
+SINOFUNCIONA USA snort -c /usr/local/snort/etc/snort/snort.lua --daq afpacket -T
 
 
-# Activar modo promiscuo (configuración especial de una tarjeta de red (NIC) que permite que esta capture y procese todos los paquetes que pasan por la red)
-sudo ip link set dev ens33 promisc on
+# Crear reglas y directorios
+sudo mkdir -p /usr/local/snort/etc/snort/rules /var/log/snort
+sudo chown -R fred:fred /usr/local/snort/etc/snort /var/log/snort
+sudo chmod -R 750 /usr/local/snort/etc/snort /var/log/snort
 
-# Crear reglas de tráfico: ingresamos al archivo correspondiente...
+# Crear reglas locales
 sudo nano /usr/local/snort/etc/snort/local.rules
 
-# Luego, agregamos las reglas:
-alert icmp any any -> $HOME_NET any (msg:"ICMP Traffic Detected"; sid:10000001;)
-alert tcp any any -> $HOME_NET 21 (msg:"FTP Traffic Detected on port 21"; sid:10000002;)
-alert tcp any any -> $HOME_NET 22 (msg:"SSH Traffic Detected on port 22"; sid:10000003;)
-alert tcp any any -> $HOME_NET 80 (msg:"HTTP Traffic Detected on port 80"; sid:10000004;)
+# Detectar tráfico ICMP (ping)
+alert icmp any any -> 10.0.0.17 any (msg:"ALERT ICMP to monitored host"; sid:1000001; rev:1;)
 
+# Detectar tráfico TCP hacia 21 (FTP)
+alert tcp any any -> 10.0.0.17 21 (msg:"ALERT TCP to port 21 (FTP)"; sid:1000002; rev:1;)
 
-# Ejecutamos Snort con las reglas creadas:
+# Detectar tráfico TCP hacia 22 (SSH)
+alert tcp any any -> 10.0.0.17 22 (msg:"ALERT TCP to port 22 (SSH)"; sid:1000003; rev:1;)
+
+# Detectar tráfico TCP hacia 80 (HTTP)
+alert tcp any any -> 10.0.0.17 80 (msg:"ALERT TCP to port 80 (HTTP)"; sid:1000004; rev:1;)
+
+# Modo Promisc
+sudo ip link set dev ens33 promisc on
+ip -d link show ens33
+
+#Ejecutar Snort
 sudo snort -c /usr/local/snort/etc/snort/snort.lua \
--R /usr/local/snort/etc/snort/local.rules \
--i ens33 -A alert_fast -s 65535 -k none
+ -R /usr/local/snort/etc/snort/local.rules \
+ -i ens33 -A console -s 65535 -k none -q
 
+XXSI NO TE FUNCIONA PRUEBA XXXXX
+sudo snort -c /usr/local/snort/etc/snort/snort.lua \
+  --daq afpacket \
+  -R /usr/local/snort/etc/snort/local.rules \
+  -i ens33 \
+  -A fast \
+  -s 65535 \
+  -k none
+
+#En caso que no funcione sytem
+sudo tee /etc/systemd/system/snort.service <<'EOF'
+[Unit]
+Description=Snort IDS
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/snort -c /usr/local/snort/etc/snort/snort.lua -i ens33 -A alert_fast -s 65535 -k none
+Restart=on-failure
+User=fred
+Group=fred
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now snort
+sudo journalctl -u snort -f
+
+# Prueba el trafico
+ping -c 4 192.168.100.168
+nc -vz 192.168.100.168 21
+nc -vz 192.168.100.168 22
+curl -I http://192.168.100.168/
+
+# Ejemplo de salida de alertas
+11/06-12:34:56.789012  [**] [1:1000001:1] ALERT ICMP to monitored host [**] [Priority: 0] {ICMP} 192.168.1.50 -> 192.168.100.168
+11/06-12:35:02.123456  [**] [1:1000002:1] ALERT TCP to port 21 (FTP) [**] [Priority: 0] {TCP} 192.168.1.50:12345 -> 192.168.100.168:21
+11/06-12:35:10.987654  [**] [1:1000003:1] ALERT TCP to port 22 (SSH) [**] [Priority: 0] {TCP} 192.168.1.50:54321 -> 192.168.100.168:22
+11/06-12:35:20.000111  [**] [1:1000004:1] ALERT TCP to port 80 (HTTP) [**] [Priority: 0] {TCP} 192.168.1.50:33333 -> 192.168.100.168:80
+
+#Por si algo falla
+- Revisar rutas y variables si snort -T muestra errores.
+- Ejecutar sudo ldconfig si faltan .so.
+- Verificar que HOME_NET sea correcto.
+- Asegurar permisos de /var/log/snort.
 
 Comandos usados practica 4
 
@@ -183,5 +279,6 @@ Luego salir y dar permisos a google
 Dar permisos a Google
 sudo chown server:server /home/Server/.google_authenticator
 sudo chmod 400 /home/server/.google_authenticator
+
 
 
