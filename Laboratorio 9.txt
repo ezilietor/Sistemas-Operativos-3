@@ -174,8 +174,12 @@ ssh ansible@IP
 ***********************CentOS Server******************************
 
 #Instalar paquetes de Pip y PyWinRm para el controlador de windows
-sudo dnf install python3-pip
-sudo pip3 install "pywinrm>=0.3.0"
+sudo dnf install python3.12 python3.12-pip python3.12-devel gcc krb5-devel -y
+sudo /usr/bin/python3.12 -m pip install "pywinrm[credssp]"
+
+sudo /usr/bin/python3.12 -m pip install pywinrm
+
+
 
 
 **************En el Powershell del Windows*************
@@ -183,10 +187,10 @@ sudo pip3 install "pywinrm>=0.3.0"
 winrm quickconfig
 
 #Crear el usuario ansible y su contraseña y añadir al grupo
-net user ansible Ez3qu1el /add
+net user ansible2 0863 /add
 
 #Añadir el usuario al grupo administradores
-net localgroup Administradores ansible /add
+net localgroup Administradores ansible2 /add
 
 #Bajar la seguridad permitiendo autenticacion basica
 winrm set winrm/config/service/auth '@{Basic="true"}'
@@ -195,7 +199,7 @@ winrm set winrm/config/service/auth '@{Basic="true"}'
 winrm set winrm/config/client '@{TrustedHosts="*"}'
 winrm set winrm/config/service '@{AllowUnencrypted="true"}'
 
-#Habilitar el firewall 
+#Habilitar el firewall (Esto no es obligatorio pero si no funciona hazlo otra vez en la parte de powershell empezando aquí)
 Enable-PSRemoting -Force
 Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP" -Enabled True
 
@@ -211,6 +215,7 @@ Start-Service WinRM
 #Habilitar WinRM sobre http en el firewall
 New-NetFirewallRule -Name "WinRM_HTTP" -DisplayName "Allow WinRM over HTTP" -Protocol TCP -LocalPort 5985 -Action Allow -Direction Inbound
 
+
 *************************CentOS Server**************************
 
 #Crear el inventario
@@ -222,11 +227,9 @@ sudo nano /etc/ansible/hosts
 os3vm ansible_host=<IP_MAQUINA_DIGITALOCEAN> ansible_user=ansible ansible_ssh_private_key_file=/home/ansible/.ssh/id_ed25519
 
 [win]
-win1 ansible_host=10.0.0.19
+10.0.0.19 ansible_user=ansible ansible_password=0863
 [win:vars]
 ansible_connection=winrm
-ansible_user=ansible2
-ansible_password=Ez3qu1el
 ansible_port=5985
 ansible_winrm_scheme=http
 ansible_winrm_transport=basic
@@ -238,5 +241,6 @@ ansible_winrm_server_cert_validation=ignore
 ansible linux -m ping
 ansible win -m win_ping
 
+#Este comando para comprobar en el powershell que funciona todo
 winrm enumerate winrm/config/listener
 
