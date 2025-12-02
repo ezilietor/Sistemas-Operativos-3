@@ -1,1 +1,242 @@
+Practica 1
+
+==========================================================
+
+# Instalar Dependencias
+sudo dnf install -y perl perl-Net-SSLeay openssl perl-Encode-Detect
+
+# Agregar repositorio oficial de Webmin
+sudo nano /etc/yum.repos.d/webmin.repo
+
+------Dentro del archivo
+[Webmin]
+name=Webmin Repository
+baseurl=https://download.webmin.com/download/newkey/yum
+enabled=1
+gpgcheck=1
+gpgkey=https://download.webmin.com/jcameron-key.asc
+---
+
+
+#Descargar las llaves 
+sudo rpm --import https://download.webmin.com/jcameron-key.asc
+
+# Instalar Webmin
+sudo dnf install -y webmin
+o
+sudo dnf install https://www.webmin.com/download/rpm/webmin-current.rpm
+
+# Habilitar el puerto
+sudo firewall-cmd --add-port=10000/tcp --permanent
+sudo firewall-cmd --reload
+
+# Ir a https://<Ip_del_servidor>:10000
+
+System -> Users and Groups
+System -> Bootup and Shutdown
+Networking -> Network Configuration
+System -> Software Packages
+Tools -> File Manager
+System -> Running Processes  o DashBoard
+
+
+Practica 2
+
+==========================================================
+
+Requisitos Previos
+1. Crear la cuenta de DigitalOcean
+2. Generar el token API ( Generate new token -> Full access) y copiarlo
+3. Generar llaves SSH ssh-keygen y luego cat y ruta de la llave.
+4.Copiar la llave y ir a DigitalOcean Settings -> Security -> Add SSH Key. (El fingerprint se usara para el Terraform.
+
+
+# Instalar Dependencias
+sudo dnf install dnf-plugins-core -y
+
+# Instalar repositorio  hashicorp
+sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+#Instalar Terraform
+sudo dnf -y install terraform
+
+#Confirmar la version y instalacion
+terraform -version
+
+#Crear la carpeta para el proyecto y entrar en ella
+mkdir Terraform_proyecto
+cd Terraform_proyecto
+
+#Crear el archivo de configuración principal
+nano main.tf
+--------------Dentro del archivo (Aqui usar Token)-----------
+
+# FALTA ESTA LÍNEA AL PRINCIPIO
+terraform {
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+  }
+}
+
+provider "digitalocean" {
+  token = "AÑADIR TU TOKEN DE API DE DIGITAL OCEAN AQUI"
+}
+
+resource "digitalocean_droplet" "web" {
+  image  = "ubuntu-22-04-x64"
+  name   = "OS3vm"
+  region = "nyc1"
+  size   = "s-1vcpu-1gb"
+  
+
+  ssh_keys = [
+    "AÑADIR EL FINGERSPRINT AQUI"
+  ]
+}
+
+output "ip_address" {
+  value = digitalocean_droplet.web.ipv4_address
+}
+---
+
+#Ejecutar el Terraform
+terraform init
+
+#Ver el plan hecho
+terraform plan
+
+#Aplicar cambios
+terraform apply
+
+#Para comprobar ir a la pagina de DigitalOcean o entrar desde ssh con la ip
+
+#Y para destruir todo
+terraform destroy
+
+
+Practica 3
+
+=========================================================
+
+#Instalar repositorios Epel
+sudo dnf install epel-release
+
+#Instalar dependencias
+sudo dnf install gcc openssl-devel bzip2-devel libffi-devel wget tar make
+
+
+#Instalar ansible 
+sudo dnf install ansible -y
+
+#Crear el usuario y contraseña
+sudo useradd ansible
+sudo passwd ansible
+sudo usermod -aG wheel ansible
+
+#entrar al usuario y generar las llaves de ssh
+su - ansible 
+ssh-keygen
+
+#Ver llave publica y copiar
+cat /ruta/de/mi/llave.pub
+
+
+*******************Cliente de Digital Ocean******************
+#Luego toca configurar el cliente de digital Ocean para poder entrar sin clave a traves de SSH
+
+#Crear el usuario de ansible y su contraseña
+sudo useradd -m -s /bin/bash ansible
+sudo passwd ansible
+
+#Dar permisos de administrador 
+sudo usermod -aG sudo ansible
+
+#Entrar en el usuario y añadir la llave publica del server
+su - ansible
+mkdir .ssh
+nano .ssh/authorized_keys
+
+------------------Pegar la llave dentro del archivo--------------
+
+----------------------------------------------------
+
+# Darles permisos al archivo 
+sudo chown -R ansible:ansible /home/ansible/.ssh
+chmod 700 /home/ansible/.ssh
+chmod 600 /home/ansible/.ssh/authorized_keys
+
+#Realizar prueba de conexión. 
+ssh ansible@IP
+
+***********************CentOS Server******************************
+
+#Instalar paquetes de Pip y PyWinRm para el controlador de windows
+sudo dnf install python3-pip
+sudo pip3 install "pywinrm>=0.3.0"
+
+
+**************En el Powershell del Windows*************
+#Configurar para acceso remoto
+winrm quickconfig
+
+#Crear el usuario ansible y su contraseña y añadir al grupo
+net user ansible Ez3qu1el /add
+
+#Añadir el usuario al grupo administradores
+net localgroup Administradores ansible /add
+
+#Bajar la seguridad permitiendo autenticacion basica
+winrm set winrm/config/service/auth '@{Basic="true"}'
+
+#Habilitar la autenticación Basica
+winrm set winrm/config/client '@{TrustedHosts="*"}'
+winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+
+#Habilitar el firewall 
+Enable-PSRemoting -Force
+Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP" -Enabled True
+
+
+#EN caso de establer la red privada 
+Set-NetConnectionProfile -Name "Red 2" -NetworkCategory Private
+
+
+#Habilitar el servicio de gestion remota cada vez que reinicie win
+Set-Service WinRM -StartupType Automatic
+Start-Service WinRM
+
+#Habilitar WinRM sobre http en el firewall
+New-NetFirewallRule -Name "WinRM_HTTP" -DisplayName "Allow WinRM over HTTP" -Protocol TCP -LocalPort 5985 -Action Allow -Direction Inbound
+
+*************************CentOS Server**************************
+
+#Crear el inventario
+sudo nano /etc/ansible/hosts
+
+------Agregar estas líneas-----------
+
+[linux]
+os3vm ansible_host=<IP_MAQUINA_DIGITALOCEAN> ansible_user=ansible ansible_ssh_private_key_file=/home/ansible/.ssh/id_ed25519
+
+[win]
+win1 ansible_host=10.0.0.19
+[win:vars]
+ansible_connection=winrm
+ansible_user=ansible2
+ansible_password=Ez3qu1el
+ansible_port=5985
+ansible_winrm_scheme=http
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore
+
+------------------------------------------------------------------
+
+#Luego hacer prueba de ping 
+ansible linux -m ping
+ansible win -m win_ping
+
+winrm enumerate winrm/config/listener
 
