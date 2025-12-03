@@ -110,7 +110,7 @@ En la app del softphone:
 - Usuario: 2221
 - Contraseña: Teletubies123$
 - Servidor/Domain/Host: TU_IP_PUBLICA
-- Puerto: 5060 (UDP)
+- Puerto: 5060/5066 (UDP) /Si no funciona la 5060 con la ip pon la 5066
 
 Guarda y registra. Deberías ver el registro en “verde”.
 
