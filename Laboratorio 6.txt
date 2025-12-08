@@ -249,6 +249,68 @@ curl -I http://192.168.100.168/
 - Verificar que HOME_NET sea correcto.
 - Asegurar permisos de /var/log/snort.
 
+********************Snort Opcion 2 Instalacion********************
+#Instalar las herramientas basicas para manejar repositorios
+dnf install -y yum-utils device-mapper-persistent-data lvm2
+
+#Agregar repositorio oficial de Docker
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+#Instalar Docker Engine
+dnf install -y docker-ce docker-ce-cli containerd.io
+
+#Iniciar Docker y habilitarlo
+systemctl start docker
+systemctl enable docker
+
+#Crear la carpeta de snort
+mkdir /root/snort-proyect
+cd /root/snort-proyect
+
+
+#Crear la carpeta de DockerFile
+cat <<EOF > Dockerfile
+FROM ubuntu:latest
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y snort tcpdump iproute2 net-tools && apt-get clean
+RUN mkdir -p /var/log/snort
+CMD ["/bin/bash"]
+EOF
+
+#Construir la imagen de ubuntu para Snort
+docker build -t snort-ubuntu .
+
+#Ejecutar lo siguiente en el docker
+docker run -it --rm \
+  --net=host \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_RAW \
+  --name snort-listener \
+  snort-ubuntu
+
+#Ahora dentro de la terminar lanzar Snort (Ojo en 'ens192', usaras el nombre de tu interfaz de red), la puedes ver con ip addr
+snort -i ens192 -vDE 'port 21 or port 22 or port 80'
+
+---------------------------
+Errores a comenter
+---------------------------
+#Si saliste con Exit del contenedor usar
+
+1. Asegurarme que no hay uno viejo corriendo con el mismo nombre
+docker rm -f snort-listener
+
+2. Lanzar contenedor persistente
+docker run -dt --restart=always \
+  --net=host \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_RAW \
+  --name snort-listener \
+  snort-ubuntu
+
+3.Para entrar al contenedor cuando quieras
+docker exec -it snort-listener bash
+
+
 Comandos usados practica 4
 
 ============================================
@@ -279,6 +341,7 @@ Luego salir y dar permisos a google
 Dar permisos a Google
 sudo chown server:server /home/Server/.google_authenticator
 sudo chmod 400 /home/server/.google_authenticator
+
 
 
 
