@@ -73,7 +73,7 @@ ssh usuario@ip
 
 ----en mi powershell---
 
-ssh-keygen
+ssh-keygen -R 10.0.0.15(tu direccion ip aqui)
 
 ---Establecer la ubicación ----
 
@@ -84,6 +84,7 @@ type $env:USERPROFILE\.ssh\id_rsa.pub | Copiar mi contraseña
 ----Dentro del servidor Linux-----
 
 nano ~/.ssh/authorized.keys | Aqui pego mi contraseña 
+
 
 
 
