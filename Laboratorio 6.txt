@@ -253,11 +253,13 @@ curl -I http://192.168.100.168/
 #Instalar las herramientas basicas para manejar repositorios
 dnf install -y yum-utils device-mapper-persistent-data lvm2
 
-#Agregar repositorio oficial de Docker
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+Instalar los plugins para dnf
+ sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
-#Instalar Docker Engine
-dnf install -y docker-ce docker-ce-cli containerd.io
+Instalar Docker Engine
+sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
 
 #Iniciar Docker y habilitarlo
 systemctl start docker
@@ -341,6 +343,7 @@ Luego salir y dar permisos a google
 Dar permisos a Google
 sudo chown server:server /home/Server/.google_authenticator
 sudo chmod 400 /home/server/.google_authenticator
+
 
 
 
