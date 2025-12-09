@@ -325,35 +325,59 @@ Comandos usados practica 4
 
 ============================================
 
+
+#Instalar las dependencias de epel para google
+sudo dnf install epel-release -y
 sudo dnf install google-authenticator -y
 
-Mandar el qr a authenticator
+#Iniciar seion en el usuario que se conectaran por ssh
+su - tu_usuario
 
-sudo nano /etc/pam.d/sshd
-auth required pam_google_authenticator.so 
+#Ejecuta el comando de configuración 
+google-authenticator
+
+#Responder las preguntas
+1.	Do yo want authentication tokens to be time-based?(y/n):y
+
+2. Se mostrara un código QR: Escanea con la App de Google Authenticator en el celular
+
+3. Copia de los códigos de emergencia.
+
+4. Do you want me to update your "/home/user/.google_authenticator" file? (y/n): y
+
+5. Do you want to disallow multiple uses of the same authentication token? (y/n): y (no es obligatorio poner y
+
+6. By default, a new token is generated every 30 seconds... Do you want to enable rate-limiting? (y/n): y (Protege contra fuerza bruta).
+
+#Configurar el archivo de configuración de PAM 
+
+sudo nano /etc/pam.d/sshd 
 ---------Agregar lo siguiente
 
-
+auth required pam_google_authenticator.so
 auth required pam_google_authenticator.so no_strict_owner (agregar )
 auth required pam_unix.so (agregar)
 auth substack password-auth
 auth include postlogin
 account include password-auth (agregar)
+----------------------------------
 
-Configurar ssh para solicitar 2Fa
+#Configurar ssh para solicitar 2Fa
 sudo nano /etc/ssh/sshd_config
-
+-------------------Agregar Esto-------------------
 ChallengeResponseAuthentication yes
 UsePAM yes
+KbdInteractiveAuthentication yes
+-------------------------------------
 
-Luego salir y dar permisos a google 
-
-Dar permisos a Google
-sudo chown server:server /home/Server/.google_authenticator
+#Dar permisos a Google
+sudo chown server:server /home/server/.google_authenticator
 sudo chmod 400 /home/server/.google_authenticator
 
+#Para que SELinux no bloquee SSH
+restorecon -Rv /home/tu_usuario/
 
+#Reiniciar ssh para aplicar cambios
+sudo systemctl restart sshd
 
-
-
-
+*****Para probar intenta loguear por ssh y te va a pedir contraseña y verification code. ***********
