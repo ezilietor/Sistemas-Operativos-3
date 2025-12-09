@@ -73,7 +73,10 @@ ssh usuario@ip
 
 ----en mi powershell---
 
-ssh-keygen -R 10.0.0.15(tu direccion ip aqui)
+ssh-keygen -R 10.0.0.20(tu direccion ip aqui)
+
+#Copiar y pegar mi contraseña en el servidor si haces esto no necesitas lo de abajo
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh server@10.0.0.20 "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
 ---Establecer la ubicación ----
 
@@ -81,9 +84,14 @@ C:\Users\ezequ\.ssh\id_rsa.pub
 
 type $env:USERPROFILE\.ssh\id_rsa.pub | Copiar mi contraseña 
 
+o
+
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh server@10.0.0.20 "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+
 ----Dentro del servidor Linux-----
 
-nano ~/.ssh/authorized.keys | Aqui pego mi contraseña 
+nano ~/.ssh/authorized_keys | Aqui pego mi contraseña 
 
 
 
