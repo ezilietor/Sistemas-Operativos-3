@@ -27,7 +27,7 @@ Sudo nano /home/website/index.html
 <title> Pagina ITLA </title>
 </head>
 <h2> Ezequiel Jimenez </h2>
-<h3> Matricula 2025-0863 </h3>
+<h3> Matricula 0000-0000 </h3>
 </html>
 -------------------------------------------------------------
 
@@ -130,7 +130,7 @@ Sudo nano /home/website/index.html
         <h3>Estudiante ITLA</h3>
         
         <div class="badge">
-            Matrícula: 2025-0863
+            Matrícula: 0000-0000
         </div>
     </main>
 
