@@ -177,14 +177,27 @@ ssh ansible@IP
 
 ***********************CentOS Server******************************
 
-#Instalar paquetes de Pip y PyWinRm para el controlador de windows
-sudo dnf install python3.12 python3.12-pip python3.12-devel gcc krb5-devel -y
-sudo nano /etc/ansible/ansible.cfg
--------------Dentro del archivo--------------------
-[defaults]
-interpreter_python = /usr/bin/python3.12
-----------------------------------------------------
-sudo /usr/bin/python3.12 -m pip install "pywinrm[credssp]"
+# Instalar Python 3.9 (que es el que usa Ansible según el diagnóstico)
+sudo dnf install python3.9 python3.9-pip python3.9-devel -y
+
+# Instalar pip si no viene con el paquete
+sudo dnf install python3-pip -y
+
+# Instalar dependencias necesarias para pywinrm
+sudo dnf install gcc krb5-devel krb5-workstation -y
+
+# Instalar pywinrm en Python 3.9 (la versión que usa Ansible)
+sudo pip3 install "pywinrm[credssp]"
+
+# Verificar la instalación
+python3 -c "import winrm; print('pywinrm instalado correctamente para Python 3.9')"
+
+# También instalar requests (importante para conexiones HTTP)
+sudo pip3 install requests
+
+# Opcional: Instalar para el usuario ansible también
+sudo su - ansible -c "pip3 install --user pywinrm requests"
+
 
 
 **************En el Powershell del Windows*************
@@ -262,6 +275,8 @@ nano Correo.txt
 
 #Enviar el archivo 
 ansible win -i hosts -m win_copy -a 'src=/home/ansible/correo.txt dest="C:\\Users\\ansible2\\Documents\\correo.txt"'
+#Si esta opcion no funciona puedes usar esta
+ansible win -m win_copy -a 'src=/home/ansible/Correo.txt dest="C:\\Users\\ansible2\\Documents\\correo.txt"'
 
 
 #Reiniciar la VM
