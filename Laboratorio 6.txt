@@ -134,7 +134,7 @@ export CFLAGS="-O3"
 export CXXFLAGS="-O3 -fno-rtti"
 
 # Compilar Snort3
-cd /home/fred
+cd /home/server
 git clone https://github.com/snort3/snort3.git
 cd snort3
 ./configure_cmake.sh --prefix=/usr/local/snort --enable-tcmalloc
@@ -381,3 +381,4 @@ restorecon -Rv /home/tu_usuario/
 sudo systemctl restart sshd
 
 *****Para probar intenta loguear por ssh y te va a pedir contraseña y verification code. ***********
+
