@@ -185,6 +185,9 @@ sudo /usr/bin/python3.12 -m pip install pywinrm
 
 
 **************En el Powershell del Windows*************
+#Permitir el ping 
+netsh advfirewall firewall add rule name="ICMP Allow inbound V4" protocol=icmpv4:any,any dir=in action=allow
+
 #Configurar para acceso remoto
 winrm quickconfig
 
