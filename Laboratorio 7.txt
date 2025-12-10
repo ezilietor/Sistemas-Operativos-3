@@ -179,12 +179,14 @@ samba-tool user create lanegracubana matricula
 #arrancar samba 
 samba -D
 
-#Verificacion de que todo esta bien 
-nslookup so3.inet
+
 
 En Windows 
 
 #Configurar el dns con la IP de mi maquina de CentOS 
+
+#Verificacion de que todo esta bien 
+nslookup so3.inet
 
 #En el cmd ejecutar 
 ping so3.inet
