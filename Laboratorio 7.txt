@@ -146,7 +146,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y samba krb5-config winbind smbc
 #Ejecutar el comando de provision y borrar cualquier configuracion previa
 rm /etc/samba/smb.conf
 rm -rf /var/lib/samba/private/*
-samba-tool domain provision --use-rfc2307 --realm=SO3.INET --domain=SO3 --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass="Admin1234!"
+
 
 #Ejecutar el controlador del dominio y aseguirar que tenga la IP de CentOS
 samba-tool domain provision \
