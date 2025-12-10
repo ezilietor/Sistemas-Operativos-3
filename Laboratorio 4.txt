@@ -57,8 +57,11 @@ sudo postconf -e "smtp_use_tls = yes" | # 5. Forzar el uso de TLS (conexión seg
 sudo postconf -e "smtp_tls_CAfile = /etc/pki/tls/certs/ca-bundle.crt"
 
 
-sudo nano /etc/postfix/sasl_passwd [smtp.gmail.com]:587    correo:codigo
+sudo nano /etc/postfix/sasl_passwd 
+----------Dentro del archivo de configuracion------------------------------------------------
+sudo nano /etc/postfix/sasl_passwd [smtp.gmail.com]:587    correo:contraseña_de_Aplicaciones
 
+----------------------------------------------------------------------------------------------------
 sudo chmod 600 /etc/postfix/sasl_passwd
 
 sudo postmap /etc/postfix/sasl_passwd
@@ -105,6 +108,7 @@ sudo firewall-cmd --reload
 sudo systemctl restart cups
 
 http://<IP_DEL_SERVIDOR>:631 | Servidor de Impresion
+
 
 
 
