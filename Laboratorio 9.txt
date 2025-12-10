@@ -179,9 +179,12 @@ ssh ansible@IP
 
 #Instalar paquetes de Pip y PyWinRm para el controlador de windows
 sudo dnf install python3.12 python3.12-pip python3.12-devel gcc krb5-devel -y
+sudo nano /etc/ansible/ansible.cfg
+-------------Dentro del archivo--------------------
+[defaults]
+interpreter_python = /usr/bin/python3.12
+----------------------------------------------------
 sudo /usr/bin/python3.12 -m pip install "pywinrm[credssp]"
-
-sudo /usr/bin/python3.12 -m pip install pywinrm
 
 
 **************En el Powershell del Windows*************
