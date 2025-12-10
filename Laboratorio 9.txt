@@ -135,6 +135,8 @@ sudo dnf install ansible -y
 sudo useradd ansible
 sudo passwd ansible
 sudo usermod -aG wheel ansible
+sudo usermod -aG root ansible
+
 
 #entrar al usuario y generar las llaves de ssh
 su - ansible 
@@ -153,6 +155,8 @@ sudo passwd ansible
 
 #Dar permisos de administrador 
 sudo usermod -aG sudo ansible
+sudo usermod -aG root ansible
+sudo usermod -aG wheel ansible
 
 #Entrar en el usuario y añadir la llave publica del server
 su - ansible
