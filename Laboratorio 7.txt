@@ -49,27 +49,31 @@ Comandos usados practica 2
 ============================================
 
 
-sudo dnf install samba samba-client samba-common -y
 
+Seleccionar la carpeta compartida y darle a conectar unidad de red
+
+***************ESTO ES UN SCRIPT QUE PUEDES COPIAR Y PEGAR EN LA TERMINAL************
+# 1. Instalación y directorios
+sudo dnf install samba samba-client samba-common -y
 sudo mkdir -p /srv/samba/adrian
 
+# 2. Usuarios y Grupos
 sudo groupadd sambagrupo
-
 sudo useradd -M -s /sbin/nologin adrianuser -G sambagrupo
 
+# 3. Contraseña (TE PEDIRÁ ESCRIBIRLA AQUÍ)
 sudo smbpasswd -a adrianuser
+sudo smbpasswd -e adrianuser
 
-sudo chown -R adrianuser:sambagrupo /srv/s
-amba/adrian
-
+# 4. Permisos y archivos de prueba
+sudo chown -R adrianuser:sambagrupo /srv/samba/adrian
 sudo chmod -R 777 /srv/samba/adrian
-
 cd /srv/samba/adrian
-
 touch adrian{1..100}.txt
 
-sudo nano /etc/samba/smb.conf
---------Añadir lo siguiente------------
+# 5. Inyectar configuración en smb.conf (Sin usar Nano)
+sudo bash -c 'cat >> /etc/samba/smb.conf <<EOF
+
 [AdrianShare]
         path = /srv/samba/adrian
         writable = yes
@@ -78,24 +82,28 @@ sudo nano /etc/samba/smb.conf
         valid users = adrianuser
         create mask = 0755
         directory mask = 0755
----------------------------
+EOF'
 
-setenforce 0  - Choca con samba y hay que usarlo 
-
-sudo setsebool -P samba_export_all_rw on - Para que SElinux no detenga los permisos
-
+# 6. Seguridad y Red
+sudo setenforce 0
+sudo setsebool -P samba_export_all_rw on
 sudo systemctl restart smb
+sudo firewall-cmd --permanent --add-service=samba
+sudo firewall-cmd --reload
 
-sudo firewall-cmd  --permanent --add-service=samba 
+# 7. Mostrar IP para conectar
+hostname -I
 
-En Windows con la cmd en administrador
-
+-----------------------------EN EL WINDOWS-----------------------------
+# 1. Borrar cualquier registro anterior o cache
 net use * /delete
 
-Luego W+R y ahi poner 
-\\IP_server
+# 2. Usar Win + R 
+\\IP_QUE_SALIO_EN_LINUX
 
-Seleccionar la carpeta compartida y darle a conectar unidad de red
+# 3. Credenciales
+Usuario: adrianuser
+Contraseña: La_que_pusiste_aqui
 
 
 Comandos usados practica 3
