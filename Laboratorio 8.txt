@@ -232,7 +232,7 @@ services:
     environment:
       WORDPRESS_DB_HOST: db:3306           
       WORDPRESS_DB_USER: admin           
-      WORDPRESS_DB_PASSWORD: 0863   
+      WORDPRESS_DB_PASSWORD: 2025   
       WORDPRESS_DB_NAME: wordpress         
     volumes:
       - ./wp_content:/var/www/html:z       
